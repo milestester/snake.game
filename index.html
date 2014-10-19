@@ -1,0 +1,257 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, user-scalable=0" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+	<style type="text/css">
+		body { 
+			margin: 0; 
+			padding: 0; 
+			background: #3498db;
+		}
+		canvas { 
+			display: block; 
+			margin: 0 auto; 
+			background: #fff; 
+		}
+	</style>
+
+	</head>
+
+	<body>
+	<canvas></canvas>
+	
+	<script>
+	
+	// General Game Constants
+	var FPS;
+	var timeOut = 1000/FPS;
+	var KEY = {ESC:27, SPACE:32, LEFT:37, UP:38, RIGHT:39, DOWN:40};
+	var DIR = {UP: "up", DOWN: "down", LEFT: "left", RIGHT: "right"};
+	
+	var SNAKE = {
+		// Canvas Variables
+		CANVAS_WIDTH: 640,
+		CANVAS_HEIGHT: 640,
+		RATIO:  null,
+		scale: 1,
+		
+		// Timeout Variables
+		dt: 0,
+		dstep: 0.06,
+		
+		// Mobile Variables
+		offset: {top: 0, left: 0},
+		currentWidth:  null,
+		currentHeight:  null,
+		canvas: null,
+		ctx:  null,
+		ua:  null,
+		android: null,
+		ios:  null,
+		
+		// Snake Variables
+		SNAKE_DIM: 16,
+		snakePos: [[224,128], [240,128], [256,128]], // Head First Left, [x,y]
+		applePos: null,
+		direction: DIR.LEFT,
+		start: 0,
+		last: new Date().getTime(),
+
+		
+		init: function(){
+			this.RATIO = this.CANVAS_WIDTH / this.CANVAS_HEIGHT;
+			this.currentWidth = this.CANVAS_WIDTH;
+			this.currentHeight = this.CANVAS_HEIGHT;
+			this.canvas = document.getElementsByTagName('canvas')[0];
+			this.canvas.width = this.CANVAS_WIDTH;
+			this.canvas.height = this.CANVAS_HEIGHT;
+			this.ctx = this.canvas.getContext('2d');
+
+			this.ua = navigator.userAgent.toLowerCase();
+			this.android = this.ua.indexOf('android') > -1 ? true : false;
+			this.ios = ( this.ua.indexOf('iphone') > -1 || this.ua.indexOf('ipad') > -1  ) ? true : false;
+			this.ios = ( this.ua.indexOf('iphone') > -1 || this.ua.indexOf('ipad') > -1  ) ? true : false;
+
+			window.addEventListener("keydown", this.checkKeyDown.bind(this), false);
+			
+			this.randomApplePos();
+			this.resize();
+			this.loop();
+		},
+		
+		checkKeyDown: function(e){
+			switch (e.keyCode){
+			case KEY.LEFT: // Left
+				e.preventDefault();
+				if(this.direction == DIR.RIGHT) return;
+				this.direction = DIR.LEFT;
+				break;
+			case KEY.UP: // Top
+				e.preventDefault();
+				if(this.direction == DIR.DOWN) return;
+				this.direction = DIR.UP;
+				break;
+			case KEY.RIGHT: // Right
+				e.preventDefault();
+				if(this.direction == DIR.LEFT) return;
+				this.direction = DIR.RIGHT;
+				break;
+			case KEY.DOWN: // Bottom
+				e.preventDefault();
+				if(this.direction == DIR.UP) return;
+				this.direction = DIR.DOWN;
+				break;
+			}
+	
+		},
+		
+		resize: function() {
+			this.currentHeight = window.innerHeight;
+			this.currentWidth = this.currentHeight * this.RATIO;
+
+			if (this.android || this.ios) {
+				document.body.style.height = (window.innerHeight + 50) + 'px';
+			}
+
+			this.canvas.style.width = this.currentWidth + 'px';
+			this.canvas.style.height = this.currentHeight + 'px';
+
+			this.scale = this.currentWidth / this.CANVAS_WIDTH;
+
+			this.offset.top = this.canvas.offsetTop;
+			this.offset.left = this.canvas.offsetLeft;
+
+			window.setTimeout(function() {
+				window.scrollTo(0,1);
+			}, 1);
+		},
+		
+		timestamp: function () { 
+			return new Date().getTime(); 
+		},
+		
+		loop: function() {
+			this.start = this.timestamp();
+			this.update((this.start-this.last)/1000.0);
+			this.render();
+			this.last = this.start;
+			if(this.edgeCollision()){
+				this.gameOver();
+			} else {
+				setTimeout(this.loop.bind(this), timeOut*0.5);
+			}
+		},
+		
+		update: function(idt) {
+			this.dt += idt;
+			if(this.dt > this.dstep){
+				this.dt -=  this.dstep
+				
+				switch(this.direction){
+					case DIR.LEFT:
+						var nextPos = this.snakePos[0].slice();
+						nextPos[0] -= this.SNAKE_DIM;
+						this.snakePos.unshift(nextPos);
+						this.snakePos.pop();
+						break
+					case DIR.RIGHT:
+						var nextPos = this.snakePos[0].slice();
+						nextPos[0] += this.SNAKE_DIM;
+						this.snakePos.unshift(nextPos);
+						this.snakePos.pop();
+						break
+					case DIR.UP:
+						var nextPos = this.snakePos[0].slice();
+						nextPos[1] -= this.SNAKE_DIM;
+						this.snakePos.unshift(nextPos);
+						this.snakePos.pop();
+						break
+					case DIR.DOWN:
+						var nextPos = this.snakePos[0].slice();
+						nextPos[1] += this.SNAKE_DIM;
+						this.snakePos.unshift(nextPos);
+						this.snakePos.pop();
+						break
+				}
+				if(this.appleCollision()){
+					this.randomApplePos();
+				}
+			}
+		},
+				
+		render: function() {
+			this.Draw.clear();
+			this.Draw.circle(this.applePos.left, this.applePos.top , 6, "red");
+			for(var i = 0; i < this.snakePos.length; i++){
+				this.drawBodySection(this.snakePos[i]);
+			}
+		},
+		
+		drawBodySection: function(section){
+			// section will be [left, top]
+			this.Draw.rect(section[0], section[1], this.SNAKE_DIM, this.SNAKE_DIM, "blue");
+		},
+		
+		gameOver: function(){
+			this.Draw.clear();
+			var end = "Game Over";
+			var metrics = this.ctx.measureText(end);
+			this.Draw.text(end, this.CANVAS_WIDTH/2 - (metrics.width)/2, this.CANVAS_HEIGHT/2 - (metrics.width)/2, 16, 'black');
+		},
+		
+		edgeCollision: function(){
+			return (this.snakePos[0][0] < 0 
+					|| this.snakePos[0][0] > (this.CANVAS_WIDTH - this.SNAKE_DIM)
+					|| this.snakePos[0][1] < 0
+					|| this.snakePos[0][1] > (this.CANVAS_HEIGHT - this.SNAKE_DIM));
+		},
+		
+		appleCollision: function(){
+			return (this.snakePos[0][0] == this.applePos.left) && (this.snakePos[0][1] == this.applePos.top);
+		},
+		
+		randomApplePos: function(){
+			this.applePos = {top: Math.floor(Math.random()* this.CANVAS_WIDTH/this.SNAKE_DIM)*16, 
+							left: Math.floor(Math.random()* this.CANVAS_WIDTH/this.SNAKE_DIM)*16};
+		}
+	}
+	
+	SNAKE.Draw = {
+
+		clear: function() {
+			SNAKE.ctx.clearRect(0, 0, SNAKE.CANVAS_WIDTH, SNAKE.CANVAS_HEIGHT);
+		},
+
+
+		rect: function(x, y, w, h, col) {
+			SNAKE.ctx.fillStyle = col;
+			SNAKE.ctx.fillRect(x, y, w, h);
+		},
+
+		circle: function(x, y, r, col) {
+			SNAKE.ctx.fillStyle = col;
+			SNAKE.ctx.beginPath();
+			SNAKE.ctx.arc(x + 5, y + 5, r, 0,  Math.PI * 2, true);
+			SNAKE.ctx.closePath();
+			SNAKE.ctx.fill();
+		},
+
+
+		text: function(string, x, y, size, col) {
+			SNAKE.ctx.font = 'bold '+size+'px Monospace';
+			SNAKE.ctx.fillStyle = col;
+			SNAKE.ctx.fillText(string, x, y);
+		}
+
+	};
+	
+	window.addEventListener('load', function(){SNAKE.init();}, false);
+	window.addEventListener('resize', function() {SNAKE.resize();}, false);
+	
+	</script>
+	
+	</body>
+</html>
