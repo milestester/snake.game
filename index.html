@@ -61,6 +61,7 @@
 		start: 0,
 		last: new Date().getTime(),
 		score: 0,
+		applesEaten: 0,
 
 		
 		init: function(){
@@ -85,29 +86,19 @@
 		},
 		
 		checkKeyDown: function(e){
-			switch (e.keyCode){
-			case KEY.LEFT: // Left
+			if(e.keyCode == KEY.LEFT && this.direction != DIR.RIGHT){
 				e.preventDefault();
-				if(this.direction == DIR.RIGHT) return;
 				this.direction = DIR.LEFT;
-				break;
-			case KEY.UP: // Top
+			} else if(e.keyCode == KEY.RIGHT && this.direction != DIR.LEFT) {
 				e.preventDefault();
-				if(this.direction == DIR.DOWN) return;
-				this.direction = DIR.UP;
-				break;
-			case KEY.RIGHT: // Right
-				e.preventDefault();
-				if(this.direction == DIR.LEFT) return;
 				this.direction = DIR.RIGHT;
-				break;
-			case KEY.DOWN: // Bottom
+			} else if(e.keyCode == KEY.UP && this.direction != DIR.DOWN) {
 				e.preventDefault();
-				if(this.direction == DIR.UP) return;
+				this.direction = DIR.UP;
+			} else if(e.keyCode == KEY.DOWN && this.direction != DIR.UP) {
+				e.preventDefault();
 				this.direction = DIR.DOWN;
-				break;
-			}
-	
+			} 	
 		},
 		
 		resize: function() {
@@ -140,7 +131,7 @@
 			this.update((this.start-this.last)/1000.0);
 			this.render();
 			this.last = this.start;
-			if(this.edgeCollision()){
+			if(this.edgeCollision() || this.bodyCollision()){
 				this.gameOver();
 			} else {
 				setTimeout(this.loop.bind(this), timeOut);
@@ -168,14 +159,15 @@
 						nextPos[1] += this.SNAKE_DIM;
 						break	
 				}
-
+	
 				this.snakePos.unshift(nextPos);
 				this.snakePos.pop();
 
 				if(this.appleCollision()){
 					this.randomApplePos();
 					timeOut *= 0.99;
-					this.score += 1;
+					this.score += this.snakePos.length;
+					this.applesEaten++;
 					this.increaseBody();
 				}
 			}
@@ -217,8 +209,10 @@
 			this.Draw.clear();
 			var end = "Game Over";
 			var metrics = this.ctx.measureText(end);
-			this.Draw.text(end, this.CANVAS_WIDTH/2 - metrics.width*2, this.CANVAS_HEIGHT/2, 56, 'black');
-			this.Draw.text("Score: " + this.score, this.CANVAS_WIDTH/2 - metrics.width*2, this.CANVAS_HEIGHT/2 + 55, 46, 'black');
+			this.Draw.text(end, this.CANVAS_WIDTH/2 - metrics.width*3, this.CANVAS_HEIGHT/2, 56, 'black');
+			this.Draw.text("Score: " + this.score, this.CANVAS_WIDTH/2 - metrics.width*3, this.CANVAS_HEIGHT/2 + 55, 46, 'black');
+			this.Draw.text("Apples Eaten: " + this.applesEaten, this.CANVAS_WIDTH/2 - metrics.width*3, this.CANVAS_HEIGHT/2 + 110, 46, 'black');
+
 		},
 		
 		edgeCollision: function(){
@@ -230,6 +224,14 @@
 		
 		appleCollision: function(){
 			return (this.snakePos[0][0] == this.applePos.left) && (this.snakePos[0][1] == this.applePos.top);
+		},
+
+		bodyCollision: function(){
+			for(var i = 1; i < this.snakePos.length; i++){
+				if(this.snakePos[i][0] == this.snakePos[0][0] && this.snakePos[i][1] == this.snakePos[0][1]){
+					return true;
+				}
+			}
 		},
 		
 		randomApplePos: function(){
@@ -260,7 +262,7 @@
 
 
 		text: function(string, x, y, size, col) {
-			SNAKE.ctx.font = 'bold '+size+'px Monospace';
+			SNAKE.ctx.font = 'bold '+ size +'px Monospace';
 			SNAKE.ctx.fillStyle = col;
 			SNAKE.ctx.fillText(string, x, y);
 		},
