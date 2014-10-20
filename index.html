@@ -9,32 +9,33 @@
 		body { 
 			margin: 0; 
 			padding: 0; 
-			background: #3498db;
+			background: rgb(170,204,153);
 		}
 		canvas { 
 			display: block; 
 			margin: 0 auto; 
-			background: #fff; 
+			background: rgb(183,211,168); 
+			border: 2px solid black;
+			border-radius: 8px;
 		}
 	</style>
 
 	</head>
 
 	<body>
-	<canvas></canvas>
-	
+		<canvas></canvas>
 	<script>
 	
 	// General Game Constants
-	var FPS;
+	var FPS = 6;
 	var timeOut = 1000/FPS;
 	var KEY = {ESC:27, SPACE:32, LEFT:37, UP:38, RIGHT:39, DOWN:40};
 	var DIR = {UP: "up", DOWN: "down", LEFT: "left", RIGHT: "right"};
 	
 	var SNAKE = {
 		// Canvas Variables
-		CANVAS_WIDTH: 640,
-		CANVAS_HEIGHT: 640,
+		CANVAS_WIDTH: 1000,
+		CANVAS_HEIGHT: 1000,
 		RATIO:  null,
 		scale: 1,
 		
@@ -53,12 +54,13 @@
 		ios:  null,
 		
 		// Snake Variables
-		SNAKE_DIM: 16,
-		snakePos: [[224,128], [240,128], [256,128]], // Head First Left, [x,y]
+		SNAKE_DIM: 25,
+		snakePos: [[225,200], [250,200], [275,200]], // Head First Left, [x,y]
 		applePos: null,
 		direction: DIR.LEFT,
 		start: 0,
 		last: new Date().getTime(),
+		score: 0,
 
 		
 		init: function(){
@@ -141,7 +143,7 @@
 			if(this.edgeCollision()){
 				this.gameOver();
 			} else {
-				setTimeout(this.loop.bind(this), timeOut*0.5);
+				setTimeout(this.loop.bind(this), timeOut);
 			}
 		},
 		
@@ -150,41 +152,57 @@
 			if(this.dt > this.dstep){
 				this.dt -=  this.dstep
 				
+				var nextPos = this.snakePos[0].slice();
+
 				switch(this.direction){
 					case DIR.LEFT:
-						var nextPos = this.snakePos[0].slice();
 						nextPos[0] -= this.SNAKE_DIM;
-						this.snakePos.unshift(nextPos);
-						this.snakePos.pop();
 						break
 					case DIR.RIGHT:
-						var nextPos = this.snakePos[0].slice();
 						nextPos[0] += this.SNAKE_DIM;
-						this.snakePos.unshift(nextPos);
-						this.snakePos.pop();
 						break
 					case DIR.UP:
-						var nextPos = this.snakePos[0].slice();
 						nextPos[1] -= this.SNAKE_DIM;
-						this.snakePos.unshift(nextPos);
-						this.snakePos.pop();
 						break
 					case DIR.DOWN:
-						var nextPos = this.snakePos[0].slice();
 						nextPos[1] += this.SNAKE_DIM;
-						this.snakePos.unshift(nextPos);
-						this.snakePos.pop();
-						break
+						break	
 				}
+
+				this.snakePos.unshift(nextPos);
+				this.snakePos.pop();
+
 				if(this.appleCollision()){
 					this.randomApplePos();
+					timeOut *= 0.99;
+					this.score += 1;
+					this.increaseBody();
 				}
 			}
 		},
-				
+		
+		increaseBody: function(){
+		var incPos = this.snakePos[this.snakePos.length - 1].slice();
+			switch(this.direction){
+			case DIR.LEFT:
+				incPos[0] += this.SNAKE_DIM;
+				break
+			case DIR.RIGHT:
+				incPos[0] -= this.SNAKE_DIM;
+				break
+			case DIR.UP:
+				incPos[1] += this.SNAKE_DIM;
+				break
+			case DIR.DOWN:
+				incPos[1] -= this.SNAKE_DIM;
+				break	
+			}
+			this.snakePos.push(incPos);
+		},
+
 		render: function() {
 			this.Draw.clear();
-			this.Draw.circle(this.applePos.left, this.applePos.top , 6, "red");
+			this.Draw.roundedRect(this.applePos.left, this.applePos.top, 22, 22, 11, "#CF000F");
 			for(var i = 0; i < this.snakePos.length; i++){
 				this.drawBodySection(this.snakePos[i]);
 			}
@@ -192,14 +210,15 @@
 		
 		drawBodySection: function(section){
 			// section will be [left, top]
-			this.Draw.rect(section[0], section[1], this.SNAKE_DIM, this.SNAKE_DIM, "blue");
+			this.Draw.rect(section[0], section[1], this.SNAKE_DIM, this.SNAKE_DIM, "#3A539B");
 		},
 		
 		gameOver: function(){
 			this.Draw.clear();
 			var end = "Game Over";
 			var metrics = this.ctx.measureText(end);
-			this.Draw.text(end, this.CANVAS_WIDTH/2 - (metrics.width)/2, this.CANVAS_HEIGHT/2 - (metrics.width)/2, 16, 'black');
+			this.Draw.text(end, this.CANVAS_WIDTH/2 - metrics.width*2, this.CANVAS_HEIGHT/2, 56, 'black');
+			this.Draw.text("Score: " + this.score, this.CANVAS_WIDTH/2 - metrics.width*2, this.CANVAS_HEIGHT/2 + 55, 46, 'black');
 		},
 		
 		edgeCollision: function(){
@@ -214,8 +233,8 @@
 		},
 		
 		randomApplePos: function(){
-			this.applePos = {top: Math.floor(Math.random()* this.CANVAS_WIDTH/this.SNAKE_DIM)*16, 
-							left: Math.floor(Math.random()* this.CANVAS_WIDTH/this.SNAKE_DIM)*16};
+			this.applePos = {top: Math.floor(Math.random()* this.CANVAS_WIDTH/this.SNAKE_DIM)*25, 
+							left: Math.floor(Math.random()* this.CANVAS_WIDTH/this.SNAKE_DIM)*25};
 		}
 	}
 	
@@ -244,6 +263,23 @@
 			SNAKE.ctx.font = 'bold '+size+'px Monospace';
 			SNAKE.ctx.fillStyle = col;
 			SNAKE.ctx.fillText(string, x, y);
+		},
+
+		roundedRect: function(x,y,width,height,radius,col){
+			SNAKE.ctx.fillStyle = col;
+			SNAKE.ctx.strokeStyle = col;
+			SNAKE.ctx.beginPath();
+			SNAKE.ctx.moveTo(x,y+radius);
+			SNAKE.ctx.lineTo(x,y+height-radius);
+			SNAKE.ctx.quadraticCurveTo(x,y+height,x+radius,y+height);
+			SNAKE.ctx.lineTo(x+width-radius,y+height);
+			SNAKE.ctx.quadraticCurveTo(x+width,y+height,x+width,y+height-radius);
+			SNAKE.ctx.lineTo(x+width,y+radius);
+			SNAKE.ctx.quadraticCurveTo(x+width,y,x+width-radius,y);
+			SNAKE.ctx.lineTo(x+radius,y);
+			SNAKE.ctx.quadraticCurveTo(x,y,x,y+radius);
+			SNAKE.ctx.fill();
+			SNAKE.ctx.stroke();
 		}
 
 	};
