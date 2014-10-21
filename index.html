@@ -58,6 +58,7 @@
 		snakePos: [[225,200], [250,200], [275,200]], // Head First Left, [x,y]
 		applePos: null,
 		direction: DIR.LEFT,
+		prevDirection: null,
 		start: 0,
 		last: new Date().getTime(),
 		score: 0,
@@ -86,16 +87,16 @@
 		},
 		
 		checkKeyDown: function(e){
-			if(e.keyCode == KEY.LEFT && this.direction != DIR.RIGHT){
+			if(e.keyCode == KEY.LEFT && this.prevDirection != DIR.RIGHT){
 				e.preventDefault();
 				this.direction = DIR.LEFT;
-			} else if(e.keyCode == KEY.RIGHT && this.direction != DIR.LEFT) {
+			} else if(e.keyCode == KEY.RIGHT && this.prevDirection != DIR.LEFT) {
 				e.preventDefault();
 				this.direction = DIR.RIGHT;
-			} else if(e.keyCode == KEY.UP && this.direction != DIR.DOWN) {
+			} else if(e.keyCode == KEY.UP && this.prevDirection != DIR.DOWN) {
 				e.preventDefault();
 				this.direction = DIR.UP;
-			} else if(e.keyCode == KEY.DOWN && this.direction != DIR.UP) {
+			} else if(e.keyCode == KEY.DOWN && this.prevDirection != DIR.UP) {
 				e.preventDefault();
 				this.direction = DIR.DOWN;
 			} 	
@@ -159,7 +160,8 @@
 						nextPos[1] += this.SNAKE_DIM;
 						break	
 				}
-	
+		
+				this.prevDirection = this.direction;
 				this.snakePos.unshift(nextPos);
 				this.snakePos.pop();
 
