@@ -28,7 +28,7 @@
 	
 	// General Game Constants
 	var FPS = 6;
-	var timeOut = 1000/FPS;
+	var timeOut = 1000/FPS * 0.2;
 	var KEY = {ESC:27, SPACE:32, LEFT:37, UP:38, RIGHT:39, DOWN:40};
 	var DIR = {UP: "up", DOWN: "down", LEFT: "left", RIGHT: "right"};
 	
@@ -41,7 +41,7 @@
 		
 		// Timeout Variables
 		dt: 0,
-		dstep: 0.06,
+		dstep: 0.2,
 		
 		// Mobile Variables
 		offset: {top: 0, left: 0},
@@ -141,7 +141,7 @@
 		
 		update: function(idt) {
 			this.dt += idt;
-			if(this.dt > this.dstep){
+			while(this.dt > this.dstep){
 				this.dt -=  this.dstep
 				
 				var nextPos = this.snakePos[0].slice();
@@ -166,8 +166,11 @@
 				this.snakePos.pop();
 
 				if(this.appleCollision()){
-					this.randomApplePos();
-					timeOut *= 0.99;
+					do{
+						this.randomApplePos();
+					} while(!this.posAvailable());
+
+					this.dstep *= 0.99;
 					this.score += this.snakePos.length;
 					this.applesEaten++;
 					this.increaseBody();
@@ -238,7 +241,16 @@
 		
 		randomApplePos: function(){
 			this.applePos = {top: Math.floor(Math.random()* this.CANVAS_WIDTH/this.SNAKE_DIM)*25, 
-							left: Math.floor(Math.random()* this.CANVAS_WIDTH/this.SNAKE_DIM)*25};
+							 left: Math.floor(Math.random()* this.CANVAS_WIDTH/this.SNAKE_DIM)*25};
+		},
+
+		posAvailable: function(){
+			for(var i = 0; i < this.snakePos.length; i++){
+				if(this.applePos.left == this.snakePos[i][0] && this.applePos.top == this.snakePos[i][1]){
+					return false;
+				}
+			}
+			return true;
 		}
 	}
 	
