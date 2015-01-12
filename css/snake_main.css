@@ -1,0 +1,68 @@
+@font-face {
+    font-family: BebasNeueLight;
+    src: url("font/BebasNeueLight.otf");
+}
+
+body { 
+	margin: 0; 
+	padding: 0; 
+	background: #68C3A3;
+}
+
+canvas { 
+	display: block; 
+	margin: 0 auto;
+	background: rgb(183,211,168); 
+	border-radius: 8px;
+}
+
+h1 {
+	font-size: 4em;
+}
+
+p {
+	font-size: 2em;
+	padding: 0;
+	margin: 25px 0;
+}
+
+div{
+	font-family: "BebasNeueLight";
+	float: left;
+	margin: 20px 0 0 30px;
+	padding-bottom: 15px;
+	width: 130px;
+	color:white;
+}
+
+#replay {
+	background: white;
+	color: #68C3A3;
+	padding: 10px;
+	border-radius: 5px;
+	cursor: pointer;
+}
+
+@media screen and (max-width: 48em) {
+
+	h1 {
+		font-size: 1.5em;
+	}
+
+	p {
+		font-size: 1em;
+	}
+}
+
+@media screen and (max-width: 24em) {
+
+	div {
+		text-align: center;
+		width: 100%;
+		margin: 0;
+	}
+
+	p {
+		margin: 18px 0;
+	}
+}
