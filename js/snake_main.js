@@ -79,8 +79,7 @@ var SNAKE = {
 	},
 	                                                        
 
- 	handleTouchStart: function(evt) {   
- 		evt.preventDefault();                                      
+ 	handleTouchStart: function(evt) {                                        
 	    xDown = evt.touches[0].clientX;                                      
 	    yDown = evt.touches[0].clientY;                                      
 	},                                            
@@ -204,27 +203,13 @@ var SNAKE = {
 	},
 	
 	increaseBody: function(){
-	var incPos = this.snakePos[this.snakePos.length - 1].slice();
-		switch(this.direction){
-		case DIR.LEFT:
-			incPos[0] += this.SNAKE_DIM;
-			break
-		case DIR.RIGHT:
-			incPos[0] -= this.SNAKE_DIM;
-			break
-		case DIR.UP:
-			incPos[1] += this.SNAKE_DIM;
-			break
-		case DIR.DOWN:
-			incPos[1] -= this.SNAKE_DIM;
-			break	
-		}
+		var incPos = this.snakePos[this.snakePos.length - 1].slice();
 		this.snakePos.push(incPos);
 	},
 
 	render: function() {
 		this.Draw.clear();
-		this.Draw.roundedRect(this.applePos.left, this.applePos.top, 22, 22, 11, "white");
+		this.Draw.roundedRect(this.applePos.left, this.applePos.top, 22, 22, 11, "red");
 		for(var i = 0; i < this.snakePos.length; i++){
 			this.drawBodySection(this.snakePos[i]);
 		}
@@ -308,7 +293,7 @@ SNAKE.Draw = {
 
 	roundedRect: function(x,y,width,height,radius,col){
 		SNAKE.ctx.fillStyle = col;
-		SNAKE.ctx.strokeStyle = "white";
+		SNAKE.ctx.strokeStyle = "red";
 		SNAKE.ctx.beginPath();
 		SNAKE.ctx.moveTo(x,y+radius);
 		SNAKE.ctx.lineTo(x,y+height-radius);
@@ -327,4 +312,9 @@ SNAKE.Draw = {
 
 window.addEventListener('load', function(){SNAKE.init();}, false);
 window.addEventListener('resize', function() {SNAKE.resize();}, false);
-document.getElementById("replay").addEventListener('click', function(){location.reload();});
+document.getElementById("replay").addEventListener('click', 
+	function(){
+		location.reload();
+	}
+);
+
